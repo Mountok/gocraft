@@ -44,7 +44,11 @@ trap 'rm -rf "$tmp_dir"' EXIT INT TERM
 git clone --depth 1 "$REPO_URL" "$tmp_dir/gocraft" >/dev/null 2>&1
 mkdir -p "$tmp_dir/build"
 (cd "$tmp_dir/gocraft" && git fetch --tags --force >/dev/null 2>&1 || true)
-version="$(cd "$tmp_dir/gocraft" && git describe --tags --abbrev=0 2>/dev/null || printf 'dev')"
+version="dev"
+for tag in $(cd "$tmp_dir/gocraft" && git tag --sort=-v:refname); do
+  version="$tag"
+  break
+done
 (cd "$tmp_dir/gocraft" && go build -ldflags "-X github.com/Mountok/gocraft/internal/version.Version=$version" -o "$tmp_dir/build/$BIN_NAME" ./cmd/gocraft)
 
 install_binary "$tmp_dir/build/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
