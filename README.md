@@ -62,6 +62,7 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
+- Current version: `v1.0.0`
 - `gocraft new <name>`
 - `--router nethttp`
 - `--arch layered`

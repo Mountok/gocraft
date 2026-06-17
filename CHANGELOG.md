@@ -1,0 +1,19 @@
+# Changelog
+
+## v1.0.0
+
+First GoCraft version.
+
+### Added
+
+- `gocraft new <name>` for generating a layered Go project.
+- `net/http` server scaffold with `GET /health`.
+- Environment-based config.
+- `log/slog` structured logging.
+- `Makefile`, `.env`, `go.mod`, `README.md`, `configs`, `migrations`, and `pkg` generation.
+- `gocraft make resource <name>` for model, repository, service, and handler skeletons.
+- System installer via `install.sh`.
+
+### Next
+
+- Gin router support.
