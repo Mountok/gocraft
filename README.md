@@ -16,6 +16,12 @@ This installs `gocraft` to `/usr/local/bin`, so it works from any directory.
 
 If `/usr/local/bin` requires admin rights, the installer will use `sudo`.
 
+Uninstall:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Mountok/gocraft/main/uninstall.sh | sh
+```
+
 Manual Go install is also supported, but it requires Go's bin directory to be in `PATH`:
 
 ```sh

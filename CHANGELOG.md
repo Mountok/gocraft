@@ -9,6 +9,7 @@
 - Interactive `gocraft new` prompt for project name and framework selection.
 - `gocraft version` and `gocraft check-update`.
 - Automatic update warning when a newer GitHub tag is available.
+- Uninstall script via `uninstall.sh`.
 
 ## v1.0.0
 
