@@ -1,0 +1,96 @@
+# GoCraft
+
+GoCraft is a CLI generator for production-ready Go project structure.
+
+It creates a clean, ordinary Go service foundation without forcing a framework or runtime dependency on the generated project.
+
+## Install
+
+```sh
+go install github.com/Mountok/gocraft/cmd/gocraft@latest
+```
+
+## Usage
+
+Create a new service:
+
+```sh
+gocraft new user-service
+```
+
+Generated structure:
+
+```text
+user-service/
+|-- cmd/user-service/
+|-- internal/
+|   |-- config/
+|   |-- handler/
+|   |-- models/
+|   |-- repository/
+|   `-- service/
+|-- migrations/
+|-- configs/
+|-- pkg/
+|-- .env
+|-- Makefile
+|-- go.mod
+`-- README.md
+```
+
+The generated service uses `net/http`, structured logging from `log/slog`, environment-based config, and a `GET /health` endpoint.
+
+Add a layered resource inside a generated project:
+
+```sh
+gocraft make resource user
+```
+
+This creates model, repository, service, and handler skeleton files.
+
+## Supported Today
+
+- `gocraft new <name>`
+- `--router nethttp`
+- `--arch layered`
+- `gocraft make resource <name>`
+
+Flags for Gin, Fiber, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
+
+## Roadmap
+
+Version 1.0:
+
+- `net/http`
+- Layered Architecture
+- project structure generation
+
+Version 2.0:
+
+- Gin
+- Fiber
+- Echo
+- Clean Architecture
+
+Version 3.0:
+
+- PostgreSQL
+- MySQL
+- GORM
+- SQLX
+- migrations
+
+Version 4.0:
+
+- CRUD generation
+- OpenAPI
+- Swagger
+- JWT
+- middleware
+
+Version 5.0:
+
+- custom templates
+- plugins
+- template marketplace
+- microservice generation
