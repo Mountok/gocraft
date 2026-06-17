@@ -30,6 +30,18 @@ Create a new service:
 gocraft new user-service
 ```
 
+Create a Gin service:
+
+```sh
+gocraft new user-service gin
+```
+
+Run interactive project creation:
+
+```sh
+gocraft new
+```
+
 Generated structure:
 
 ```text
@@ -50,7 +62,7 @@ user-service/
 `-- README.md
 ```
 
-The generated service uses `net/http`, structured logging from `log/slog`, environment-based config, and a `GET /health` endpoint.
+The generated service uses `net/http` by default, structured logging from `log/slog`, environment-based config, and a `GET /health` endpoint.
 
 Add a layered resource inside a generated project:
 
@@ -64,11 +76,14 @@ This creates model, repository, service, and handler skeleton files.
 
 - Current version: `v1.0.0`
 - `gocraft new <name>`
+- `gocraft new <name> gin`
+- interactive `gocraft new`
 - `--router nethttp`
+- `--router gin`
 - `--arch layered`
 - `gocraft make resource <name>`
 
-Flags for Gin, Fiber, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
+Flags for Fiber, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
 
 ## Roadmap
 
@@ -80,7 +95,6 @@ Version 1.0:
 
 Version 2.0:
 
-- Gin
 - Fiber
 - Echo
 - Clean Architecture

@@ -3,6 +3,7 @@ package generator
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -45,8 +46,36 @@ func TestNewProjectCreatesLayeredHTTPProject(t *testing.T) {
 	}
 }
 
+func TestNewProjectCreatesGinProject(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewProject(ProjectOptions{Name: "api", Router: "gin", Arch: "layered"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+
+	goMod, err := os.ReadFile(filepath.Join(tmp, "api", "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(goMod), "github.com/gin-gonic/gin") {
+		t.Fatal("expected Gin dependency in go.mod")
+	}
+}
+
 func TestNewProjectRejectsUnsupportedRouter(t *testing.T) {
-	err := NewProject(ProjectOptions{Name: "api", Router: "gin", Arch: "layered"})
+	err := NewProject(ProjectOptions{Name: "api", Router: "fiber", Arch: "layered"})
 	if err == nil {
 		t.Fatal("expected unsupported router error")
 	}

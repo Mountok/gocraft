@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `gocraft new <name> gin` for Gin project generation.
+- `gocraft new <name> default` as an explicit default `net/http` shortcut.
+- Interactive `gocraft new` prompt for project name and framework selection.
+
 ## v1.0.0
 
 First GoCraft version.

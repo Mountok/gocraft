@@ -34,11 +34,19 @@ type templateData struct {
 	Name        string
 	PackageName string
 	ModulePath  string
+	Router      string
+	UsesGin     bool
 	Resource    string
 	TypeName    string
 }
 
 func NewProject(options ProjectOptions) error {
+	router, err := normalizeRouter(options.Router)
+	if err != nil {
+		return err
+	}
+	options.Router = router
+
 	if err := validateProjectOptions(options); err != nil {
 		return err
 	}
@@ -52,6 +60,14 @@ func NewProject(options ProjectOptions) error {
 		Name:        options.Name,
 		PackageName: packageName(options.Name),
 		ModulePath:  defaultModulePrefix + "/" + options.Name,
+		Router:      options.Router,
+		UsesGin:     options.Router == "gin",
+	}
+	mainTpl := netHTTPMainTemplate
+	healthHandlerTpl := netHTTPHealthHandlerTemplate
+	if options.Router == "gin" {
+		mainTpl = ginMainTemplate
+		healthHandlerTpl = ginHealthHandlerTemplate
 	}
 
 	for _, dir := range []string{
@@ -75,9 +91,9 @@ func NewProject(options ProjectOptions) error {
 		{Path: ".env", Template: envTemplate},
 		{Path: "Makefile", Template: makefileTemplate},
 		{Path: "README.md", Template: projectReadmeTemplate},
-		{Path: "cmd/{{.Name}}/main.go", Template: mainTemplate, Go: true},
+		{Path: "cmd/{{.Name}}/main.go", Template: mainTpl, Go: true},
 		{Path: "internal/config/config.go", Template: configTemplate, Go: true},
-		{Path: "internal/handler/health_handler.go", Template: healthHandlerTemplate, Go: true},
+		{Path: "internal/handler/health_handler.go", Template: healthHandlerTpl, Go: true},
 		{Path: "internal/service/health_service.go", Template: healthServiceTemplate, Go: true},
 		{Path: "internal/repository/health_repository.go", Template: healthRepositoryTemplate, Go: true},
 		{Path: "internal/models/health.go", Template: healthModelTemplate, Go: true},
@@ -130,12 +146,6 @@ func validateProjectOptions(options ProjectOptions) error {
 	if !validName.MatchString(options.Name) {
 		return fmt.Errorf("invalid project name %q", options.Name)
 	}
-	if options.Router == "" {
-		options.Router = "nethttp"
-	}
-	if options.Router != "nethttp" {
-		return fmt.Errorf("router %q is not supported yet; use nethttp", options.Router)
-	}
 	if options.Arch == "" {
 		options.Arch = "layered"
 	}
@@ -149,6 +159,17 @@ func validateProjectOptions(options ProjectOptions) error {
 		return fmt.Errorf("ORM support %q is planned for a future release", options.ORM)
 	}
 	return nil
+}
+
+func normalizeRouter(router string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(router)) {
+	case "", "default", "nethttp", "net/http", "http":
+		return "nethttp", nil
+	case "gin":
+		return "gin", nil
+	default:
+		return "", fmt.Errorf("framework %q is not supported yet; use default or gin", router)
+	}
 }
 
 func writeTemplate(root string, file fileSpec, data templateData) error {
