@@ -54,6 +54,8 @@ Run interactive project creation:
 gocraft new
 ```
 
+In a terminal, this opens a colored wizard with arrow-key selection for framework and architecture.
+
 Check installed version:
 
 ```sh
@@ -93,11 +95,11 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
-- Current version: `v1.2.0`
+- Current version: `v1.3.0`
 - `gocraft new <name>`
 - `gocraft new <name> gin`
 - `gocraft new <name> chi`
-- interactive `gocraft new`
+- interactive `gocraft new` with arrow-key TUI
 - `--router nethttp`
 - `--router gin`
 - `--router chi`

@@ -7,8 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/Mountok/gocraft/internal/generator"
 	"github.com/Mountok/gocraft/internal/update"
@@ -115,6 +118,67 @@ func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 }
 
 func runInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm string) error {
+	if isTerminal(stdin) {
+		return runTUIInteractiveNew(stdout, arch, db, orm)
+	}
+	return runFallbackInteractiveNew(stdin, stdout, arch, db, orm)
+}
+
+func runTUIInteractiveNew(stdout io.Writer, arch, db, orm string) error {
+	fmt.Fprintln(stdout, "\033[36mGoCraft project wizard\033[0m")
+	fmt.Fprintln(stdout, "\033[90mUse arrow keys to select options. Press Enter to confirm.\033[0m")
+
+	prompt := promptui.Prompt{
+		Label: "\033[35mProject name\033[0m",
+		Validate: func(input string) error {
+			if strings.TrimSpace(input) == "" {
+				return errors.New("project name is required")
+			}
+			return nil
+		},
+	}
+	name, err := prompt.Run()
+	if err != nil {
+		return err
+	}
+
+	frameworks := []choice{
+		{Label: "default", Description: "net/http standard library", Value: "default"},
+		{Label: "gin", Description: "Gin web framework", Value: "gin"},
+		{Label: "chi", Description: "chi lightweight router", Value: "chi"},
+	}
+	_, framework, err := selectChoice("Framework", frameworks)
+	if err != nil {
+		return err
+	}
+
+	architectures := []choice{
+		{Label: "layered", Description: "handler -> service -> repository", Value: "layered"},
+	}
+	_, selectedArch, err := selectChoice("Architecture", architectures)
+	if err != nil {
+		return err
+	}
+	if arch != "" {
+		selectedArch.Value = arch
+	}
+
+	options := generator.ProjectOptions{
+		Name:   strings.TrimSpace(name),
+		Router: framework.Value,
+		Arch:   selectedArch.Value,
+		DB:     db,
+		ORM:    orm,
+	}
+	if err := generator.NewProject(options); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(stdout, "\033[32mcreated GoCraft project %s\033[0m\n", options.Name)
+	return nil
+}
+
+func runFallbackInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm string) error {
 	reader := bufio.NewReader(stdin)
 
 	fmt.Fprint(stdout, "Project name: ")
@@ -158,6 +222,44 @@ func runInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm string) 
 
 	fmt.Fprintf(stdout, "created GoCraft project %s\n", options.Name)
 	return nil
+}
+
+type choice struct {
+	Label       string
+	Description string
+	Value       string
+}
+
+func selectChoice(label string, items []choice) (int, choice, error) {
+	templates := &promptui.SelectTemplates{
+		Label:    "{{ . }}:",
+		Active:   "{{ \">\" | cyan }} {{ .Label | cyan }} {{ .Description | faint }}",
+		Inactive: "  {{ .Label }} {{ .Description | faint }}",
+		Selected: "{{ \"OK\" | green }} {{ .Label | green }}",
+	}
+	selectPrompt := promptui.Select{
+		Label:     "\033[35m" + label + "\033[0m",
+		Items:     items,
+		Templates: templates,
+		Size:      len(items),
+	}
+	index, _, err := selectPrompt.Run()
+	if err != nil {
+		return 0, choice{}, err
+	}
+	return index, items[index], nil
+}
+
+func isTerminal(input io.Reader) bool {
+	file, ok := input.(*os.File)
+	if !ok {
+		return false
+	}
+	info, err := file.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
 }
 
 func runMake(args []string, stdout, stderr io.Writer) error {

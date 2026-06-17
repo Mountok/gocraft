@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.0
+
+### Added
+
+- Colored interactive TUI for `gocraft new`.
+- Arrow-key selection for framework and architecture.
+
+### Changed
+
+- Non-terminal interactive input remains available as a fallback for pipes and tests.
+
 ## v1.2.0
 
 ### Added
