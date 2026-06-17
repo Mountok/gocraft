@@ -48,6 +48,12 @@ Create a chi service:
 gocraft new user-service chi
 ```
 
+Create a Fiber service:
+
+```sh
+gocraft new user-service fiber
+```
+
 Run interactive project creation:
 
 ```sh
@@ -95,20 +101,22 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
-- Current version: `v1.3.0`
+- Current version: `v1.4.0`
 - `gocraft new <name>`
 - `gocraft new <name> gin`
 - `gocraft new <name> chi`
+- `gocraft new <name> fiber`
 - interactive `gocraft new` with arrow-key TUI
 - `--router nethttp`
 - `--router gin`
 - `--router chi`
+- `--router fiber`
 - `--arch layered`
 - `gocraft make resource <name>`
 - `gocraft version`
 - automatic update warning when a newer GitHub tag is available
 
-Flags for Fiber, Echo, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
+Flags for Echo, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
 
 ## Roadmap
 

@@ -37,6 +37,7 @@ type templateData struct {
 	Router      string
 	UsesGin     bool
 	UsesChi     bool
+	UsesFiber   bool
 	Resource    string
 	TypeName    string
 }
@@ -64,6 +65,7 @@ func NewProject(options ProjectOptions) error {
 		Router:      options.Router,
 		UsesGin:     options.Router == "gin",
 		UsesChi:     options.Router == "chi",
+		UsesFiber:   options.Router == "fiber",
 	}
 	mainTpl := netHTTPMainTemplate
 	healthHandlerTpl := netHTTPHealthHandlerTemplate
@@ -72,6 +74,9 @@ func NewProject(options ProjectOptions) error {
 		healthHandlerTpl = ginHealthHandlerTemplate
 	} else if options.Router == "chi" {
 		mainTpl = chiMainTemplate
+	} else if options.Router == "fiber" {
+		mainTpl = fiberMainTemplate
+		healthHandlerTpl = fiberHealthHandlerTemplate
 	}
 
 	for _, dir := range []string{
@@ -173,8 +178,10 @@ func normalizeRouter(router string) (string, error) {
 		return "gin", nil
 	case "chi":
 		return "chi", nil
+	case "fiber":
+		return "fiber", nil
 	default:
-		return "", fmt.Errorf("framework %q is not supported yet; use default, gin, or chi", router)
+		return "", fmt.Errorf("framework %q is not supported yet; use default, gin, chi, or fiber", router)
 	}
 }
 

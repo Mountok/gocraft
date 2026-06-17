@@ -6,6 +6,7 @@ go 1.22
 
 {{if .UsesGin}}require github.com/gin-gonic/gin v1.10.0
 {{else if .UsesChi}}require github.com/go-chi/chi/v5 v5.1.0
+{{else if .UsesFiber}}require github.com/gofiber/fiber/v2 v2.52.5
 {{end}}
 `
 
@@ -150,6 +151,39 @@ func main() {
 }
 `
 
+const fiberMainTemplate = `package main
+
+import (
+	"log/slog"
+	"os"
+
+	"github.com/gofiber/fiber/v2"
+
+	"{{.ModulePath}}/internal/config"
+	"{{.ModulePath}}/internal/handler"
+	"{{.ModulePath}}/internal/repository"
+	"{{.ModulePath}}/internal/service"
+)
+
+func main() {
+	cfg := config.Load()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	healthRepository := repository.NewHealthRepository()
+	healthService := service.NewHealthService(healthRepository)
+	healthHandler := handler.NewHealthHandler(healthService)
+
+	app := fiber.New()
+	app.Get("/health", healthHandler.Check)
+
+	logger.Info("starting server", "addr", cfg.HTTPAddr)
+	if err := app.Listen(cfg.HTTPAddr); err != nil {
+		logger.Error("server stopped", "error", err)
+		os.Exit(1)
+	}
+}
+`
+
 const configTemplate = `package config
 
 import "os"
@@ -220,6 +254,29 @@ func NewHealthHandler(service *service.HealthService) *HealthHandler {
 
 func (h *HealthHandler) Check(c *gin.Context) {
 	c.JSON(http.StatusOK, h.service.Check(c.Request.Context()))
+}
+`
+
+const fiberHealthHandlerTemplate = `package handler
+
+import (
+	"context"
+
+	"github.com/gofiber/fiber/v2"
+
+	"{{.ModulePath}}/internal/service"
+)
+
+type HealthHandler struct {
+	service *service.HealthService
+}
+
+func NewHealthHandler(service *service.HealthService) *HealthHandler {
+	return &HealthHandler{service: service}
+}
+
+func (h *HealthHandler) Check(c *fiber.Ctx) error {
+	return c.JSON(h.service.Check(context.Background()))
 }
 `
 

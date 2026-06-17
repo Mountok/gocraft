@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.0
+
+### Added
+
+- `gocraft new <name> fiber` for Fiber project generation.
+- Interactive framework selection now includes Fiber.
+
 ## v1.3.0
 
 ### Added
