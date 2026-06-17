@@ -35,6 +35,7 @@ type templateData struct {
 	PackageName string
 	ModulePath  string
 	Router      string
+	Arch        string
 	UsesGin     bool
 	UsesChi     bool
 	UsesFiber   bool
@@ -64,27 +65,14 @@ func NewProject(options ProjectOptions) error {
 		PackageName: packageName(options.Name),
 		ModulePath:  defaultModulePrefix + "/" + options.Name,
 		Router:      options.Router,
+		Arch:        options.Arch,
 		UsesGin:     options.Router == "gin",
 		UsesChi:     options.Router == "chi",
 		UsesFiber:   options.Router == "fiber",
 		UsesEcho:    options.Router == "echo",
 	}
-	mainTpl := netHTTPMainTemplate
-	healthHandlerTpl := netHTTPHealthHandlerTemplate
-	if options.Router == "gin" {
-		mainTpl = ginMainTemplate
-		healthHandlerTpl = ginHealthHandlerTemplate
-	} else if options.Router == "chi" {
-		mainTpl = chiMainTemplate
-	} else if options.Router == "fiber" {
-		mainTpl = fiberMainTemplate
-		healthHandlerTpl = fiberHealthHandlerTemplate
-	} else if options.Router == "echo" {
-		mainTpl = echoMainTemplate
-		healthHandlerTpl = echoHealthHandlerTemplate
-	}
 
-	for _, dir := range []string{
+	dirs := []string{
 		"cmd/" + options.Name,
 		"internal/config",
 		"internal/handler",
@@ -94,13 +82,55 @@ func NewProject(options ProjectOptions) error {
 		"configs",
 		"migrations",
 		"pkg",
-	} {
+	}
+	files := layeredFiles(options.Router)
+	if options.Arch == "clean" {
+		dirs = []string{
+			"cmd/" + options.Name,
+			"internal/config",
+			"internal/domain",
+			"internal/usecase",
+			"internal/interface/http",
+			"internal/infrastructure/repository",
+			"configs",
+			"migrations",
+			"pkg",
+		}
+		files = cleanFiles(options.Router)
+	}
+
+	for _, dir := range dirs {
 		if err := os.MkdirAll(filepath.Join(options.Name, dir), 0o755); err != nil {
 			return err
 		}
 	}
 
-	files := []fileSpec{
+	for _, file := range files {
+		if err := writeTemplate(options.Name, file, data); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func layeredFiles(router string) []fileSpec {
+	mainTpl := netHTTPMainTemplate
+	healthHandlerTpl := netHTTPHealthHandlerTemplate
+	if router == "gin" {
+		mainTpl = ginMainTemplate
+		healthHandlerTpl = ginHealthHandlerTemplate
+	} else if router == "chi" {
+		mainTpl = chiMainTemplate
+	} else if router == "fiber" {
+		mainTpl = fiberMainTemplate
+		healthHandlerTpl = fiberHealthHandlerTemplate
+	} else if router == "echo" {
+		mainTpl = echoMainTemplate
+		healthHandlerTpl = echoHealthHandlerTemplate
+	}
+
+	return []fileSpec{
 		{Path: "go.mod", Template: projectGoModTemplate},
 		{Path: ".env", Template: envTemplate},
 		{Path: "Makefile", Template: makefileTemplate},
@@ -115,14 +145,39 @@ func NewProject(options ProjectOptions) error {
 		{Path: "migrations/.gitkeep", Template: ""},
 		{Path: "pkg/.gitkeep", Template: ""},
 	}
+}
 
-	for _, file := range files {
-		if err := writeTemplate(options.Name, file, data); err != nil {
-			return err
-		}
+func cleanFiles(router string) []fileSpec {
+	mainTpl := cleanNetHTTPMainTemplate
+	healthHandlerTpl := cleanNetHTTPHealthHandlerTemplate
+	if router == "gin" {
+		mainTpl = cleanGinMainTemplate
+		healthHandlerTpl = cleanGinHealthHandlerTemplate
+	} else if router == "chi" {
+		mainTpl = cleanChiMainTemplate
+	} else if router == "fiber" {
+		mainTpl = cleanFiberMainTemplate
+		healthHandlerTpl = cleanFiberHealthHandlerTemplate
+	} else if router == "echo" {
+		mainTpl = cleanEchoMainTemplate
+		healthHandlerTpl = cleanEchoHealthHandlerTemplate
 	}
 
-	return nil
+	return []fileSpec{
+		{Path: "go.mod", Template: projectGoModTemplate},
+		{Path: ".env", Template: envTemplate},
+		{Path: "Makefile", Template: makefileTemplate},
+		{Path: "README.md", Template: projectReadmeTemplate},
+		{Path: "cmd/{{.Name}}/main.go", Template: mainTpl, Go: true},
+		{Path: "internal/config/config.go", Template: configTemplate, Go: true},
+		{Path: "internal/domain/health.go", Template: cleanHealthDomainTemplate, Go: true},
+		{Path: "internal/usecase/health_usecase.go", Template: cleanHealthUsecaseTemplate, Go: true},
+		{Path: "internal/interface/http/health_handler.go", Template: healthHandlerTpl, Go: true},
+		{Path: "internal/infrastructure/repository/health_repository.go", Template: cleanHealthRepositoryTemplate, Go: true},
+		{Path: "configs/config.example.yaml", Template: configExampleTemplate},
+		{Path: "migrations/.gitkeep", Template: ""},
+		{Path: "pkg/.gitkeep", Template: ""},
+	}
 }
 
 func NewResource(root, name string) error {
@@ -163,8 +218,8 @@ func validateProjectOptions(options ProjectOptions) error {
 	if options.Arch == "" {
 		options.Arch = "layered"
 	}
-	if options.Arch != "layered" {
-		return fmt.Errorf("architecture %q is not supported yet; use layered", options.Arch)
+	if options.Arch != "layered" && options.Arch != "clean" {
+		return fmt.Errorf("architecture %q is not supported yet; use layered or clean", options.Arch)
 	}
 	if options.DB != "" {
 		return fmt.Errorf("database support %q is planned for a future release", options.DB)

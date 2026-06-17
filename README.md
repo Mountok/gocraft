@@ -60,6 +60,12 @@ Create an Echo service:
 gocraft new user-service echo
 ```
 
+Create a Clean Architecture service:
+
+```sh
+gocraft new --arch clean user-service
+```
+
 Run interactive project creation:
 
 ```sh
@@ -107,7 +113,7 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
-- Current version: `v1.5.0`
+- Current version: `v2.0.0`
 - `gocraft new <name>`
 - `gocraft new <name> gin`
 - `gocraft new <name> chi`
@@ -120,11 +126,12 @@ This creates model, repository, service, and handler skeleton files.
 - `--router fiber`
 - `--router echo`
 - `--arch layered`
+- `--arch clean`
 - `gocraft make resource <name>`
 - `gocraft version`
 - automatic update warning when a newer GitHub tag is available
 
-Flags for Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
+Flags for database support and ORM support are intentionally rejected until those releases are implemented.
 
 ## Roadmap
 
@@ -136,8 +143,6 @@ Version 1.0:
 
 Version 2.0:
 
-- Fiber
-- Echo
 - Clean Architecture
 
 Version 3.0:

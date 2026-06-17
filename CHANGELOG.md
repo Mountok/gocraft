@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.0.0
+
+### Added
+
+- `--arch clean` for Clean Architecture project generation.
+- Interactive architecture selection now includes Clean Architecture.
+
 ## v1.5.0
 
 ### Added

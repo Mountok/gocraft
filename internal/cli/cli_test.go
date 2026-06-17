@@ -85,7 +85,7 @@ func TestRunNewInteractive(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	stdin := bytes.NewBufferString("api\n3\n")
+	stdin := bytes.NewBufferString("api\n3\n2\n")
 	if err := Run([]string{"new"}, stdin, &stdout, &stderr); err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}

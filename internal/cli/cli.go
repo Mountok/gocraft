@@ -23,7 +23,7 @@ const usage = `GoCraft - Go project architecture generator
 Usage:
   gocraft new
   gocraft new <name> [default|gin|chi|fiber|echo]
-  gocraft new <name> [--router default|nethttp|gin|chi|fiber|echo] [--arch layered]
+  gocraft new [--router default|nethttp|gin|chi|fiber|echo] [--arch layered|clean] <name>
   gocraft make resource <name>
   gocraft version
   gocraft check-update
@@ -84,15 +84,21 @@ func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("new", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	router := flags.String("router", "", "HTTP framework: default, nethttp, gin, chi, fiber, echo")
-	arch := flags.String("arch", "layered", "architecture: layered")
+	arch := flags.String("arch", "layered", "architecture: layered, clean")
 	db := flags.String("db", "", "database support: planned")
 	orm := flags.String("orm", "", "ORM support: planned")
 
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
+	archOverride := ""
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "arch" {
+			archOverride = *arch
+		}
+	})
 	if flags.NArg() == 0 {
-		return runInteractiveNew(stdin, stdout, *arch, *db, *orm)
+		return runInteractiveNew(stdin, stdout, archOverride, *db, *orm)
 	}
 	if flags.NArg() > 2 {
 		return errors.New("usage: gocraft new <name> [default|gin|chi|fiber|echo]")
@@ -158,6 +164,7 @@ func runTUIInteractiveNew(stdout io.Writer, arch, db, orm string) error {
 
 	architectures := []choice{
 		{Label: "layered", Description: "handler -> service -> repository", Value: "layered"},
+		{Label: "clean", Description: "domain -> usecase -> interface -> infrastructure", Value: "clean"},
 	}
 	_, selectedArch, err := selectChoice("Architecture", architectures)
 	if err != nil {
@@ -219,10 +226,28 @@ func runFallbackInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm 
 		framework = "echo"
 	}
 
+	fmt.Fprintln(stdout, "Architecture:")
+	fmt.Fprintln(stdout, "  1) layered")
+	fmt.Fprintln(stdout, "  2) clean")
+	fmt.Fprint(stdout, "Select architecture [1]: ")
+	selectedArch, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return err
+	}
+	selectedArch = strings.TrimSpace(selectedArch)
+	if selectedArch == "" || selectedArch == "1" {
+		selectedArch = "layered"
+	} else if selectedArch == "2" {
+		selectedArch = "clean"
+	}
+	if arch != "" && arch != "layered" {
+		selectedArch = arch
+	}
+
 	options := generator.ProjectOptions{
 		Name:   name,
 		Router: framework,
-		Arch:   arch,
+		Arch:   selectedArch,
 		DB:     db,
 		ORM:    orm,
 	}

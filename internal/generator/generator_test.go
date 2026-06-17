@@ -158,10 +158,48 @@ func TestNewProjectCreatesEchoProject(t *testing.T) {
 	}
 }
 
+func TestNewProjectCreatesCleanProject(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "clean"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+
+	for _, path := range []string{
+		"api/internal/domain/health.go",
+		"api/internal/usecase/health_usecase.go",
+		"api/internal/interface/http/health_handler.go",
+		"api/internal/infrastructure/repository/health_repository.go",
+	} {
+		if _, err := os.Stat(filepath.Join(tmp, path)); err != nil {
+			t.Fatalf("expected generated file %s: %v", path, err)
+		}
+	}
+}
+
 func TestNewProjectRejectsUnsupportedRouter(t *testing.T) {
 	err := NewProject(ProjectOptions{Name: "api", Router: "fasthttp", Arch: "layered"})
 	if err == nil {
 		t.Fatal("expected unsupported router error")
+	}
+}
+
+func TestNewProjectRejectsUnsupportedArchitecture(t *testing.T) {
+	err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "hexagonal"})
+	if err == nil {
+		t.Fatal("expected unsupported architecture error")
 	}
 }
 
