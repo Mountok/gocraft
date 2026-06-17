@@ -7,6 +7,8 @@
 - `gocraft new <name> gin` for Gin project generation.
 - `gocraft new <name> default` as an explicit default `net/http` shortcut.
 - Interactive `gocraft new` prompt for project name and framework selection.
+- `gocraft version` and `gocraft check-update`.
+- Automatic update warning when a newer GitHub tag is available.
 
 ## v1.0.0
 

@@ -2,13 +2,17 @@ package cli
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/Mountok/gocraft/internal/generator"
+	"github.com/Mountok/gocraft/internal/update"
+	"github.com/Mountok/gocraft/internal/version"
 )
 
 const usage = `GoCraft - Go project architecture generator
@@ -18,6 +22,8 @@ Usage:
   gocraft new <name> [default|gin]
   gocraft new <name> [--router default|nethttp|gin] [--arch layered]
   gocraft make resource <name>
+  gocraft version
+  gocraft check-update
 
 Examples:
   gocraft new user-service
@@ -36,12 +42,36 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		_, _ = io.WriteString(stdout, usage)
 		return nil
 	case "new":
+		update.WarnIfOutdated(stderr)
 		return runNew(args[1:], stdin, stdout, stderr)
 	case "make":
+		update.WarnIfOutdated(stderr)
 		return runMake(args[1:], stdout, stderr)
+	case "version", "--version", "-v":
+		fmt.Fprintf(stdout, "gocraft %s\n", version.Current())
+		return nil
+	case "check-update":
+		return runCheckUpdate(stdout)
 	default:
 		return fmt.Errorf("unknown command %q\n\n%s", args[0], usage)
 	}
+}
+
+func runCheckUpdate(stdout io.Writer) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := update.Check(ctx)
+	if err != nil {
+		return err
+	}
+	if result.Outdated {
+		fmt.Fprintf(stdout, "update available: %s -> %s\n", result.Current, result.Latest)
+		fmt.Fprintln(stdout, "Update: curl -fsSL https://raw.githubusercontent.com/Mountok/gocraft/main/install.sh | sh")
+		return nil
+	}
+	fmt.Fprintf(stdout, "gocraft is up to date: %s\n", result.Current)
+	return nil
 }
 
 func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {

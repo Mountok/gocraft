@@ -42,6 +42,13 @@ Run interactive project creation:
 gocraft new
 ```
 
+Check installed version:
+
+```sh
+gocraft version
+gocraft check-update
+```
+
 Generated structure:
 
 ```text
@@ -82,6 +89,8 @@ This creates model, repository, service, and handler skeleton files.
 - `--router gin`
 - `--arch layered`
 - `gocraft make resource <name>`
+- `gocraft version`
+- automatic update warning when a newer GitHub tag is available
 
 Flags for Fiber, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
 
