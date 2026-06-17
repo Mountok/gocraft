@@ -81,7 +81,7 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
-- Current version: `v1.0.0`
+- Current version: `v1.1.0`
 - `gocraft new <name>`
 - `gocraft new <name> gin`
 - interactive `gocraft new`
