@@ -163,8 +163,8 @@ func runTUIInteractiveNew(stdout io.Writer, arch, db, orm string) error {
 	}
 
 	architectures := []choice{
-		{Label: "layered", Description: "handler -> service -> repository", Value: "layered"},
-		{Label: "clean", Description: "domain -> usecase -> interface -> infrastructure", Value: "clean"},
+		{Label: "layered", Description: "simple service layout: handler -> service -> repository", Value: "layered"},
+		{Label: "clean", Description: "strict boundaries: domain -> usecase -> interface -> infrastructure", Value: "clean"},
 	}
 	_, selectedArch, err := selectChoice("Architecture", architectures)
 	if err != nil {

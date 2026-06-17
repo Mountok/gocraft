@@ -1,7 +1,10 @@
 package generator
 
 import (
+	"go/parser"
+	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -218,5 +221,92 @@ func TestNewResourceDoesNotOverwriteExistingFiles(t *testing.T) {
 	err := NewResource(tmp, "user")
 	if err == nil {
 		t.Fatal("expected overwrite error")
+	}
+}
+
+func TestNewResourceCreatesCleanArchitectureFiles(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "clean"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+	if err := NewResource(filepath.Join(tmp, "api"), "user"); err != nil {
+		t.Fatalf("NewResource() error = %v", err)
+	}
+
+	for _, path := range []string{
+		"api/internal/domain/user.go",
+		"api/internal/usecase/user_usecase.go",
+		"api/internal/interface/http/user_handler.go",
+		"api/internal/infrastructure/repository/user_repository.go",
+	} {
+		if _, err := os.Stat(filepath.Join(tmp, path)); err != nil {
+			t.Fatalf("expected generated file %s: %v", path, err)
+		}
+	}
+}
+
+func TestAllRouterArchitectureCombinationsGenerateParseableGo(t *testing.T) {
+	routers := []string{"nethttp", "gin", "chi", "fiber", "echo"}
+	architectures := []string{"layered", "clean"}
+
+	for _, router := range routers {
+		for _, arch := range architectures {
+			name := router + "-" + arch
+			t.Run(name, func(t *testing.T) {
+				tmp := t.TempDir()
+				oldWD, err := os.Getwd()
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() {
+					if err := os.Chdir(oldWD); err != nil {
+						t.Fatal(err)
+					}
+				})
+				if err := os.Chdir(tmp); err != nil {
+					t.Fatal(err)
+				}
+				if err := NewProject(ProjectOptions{Name: name, Router: router, Arch: arch}); err != nil {
+					t.Fatalf("NewProject() error = %v", err)
+				}
+				assertParseableGo(t, filepath.Join(tmp, name))
+				if router == "nethttp" {
+					cmd := exec.Command("go", "test", "./...")
+					cmd.Dir = filepath.Join(tmp, name)
+					if output, err := cmd.CombinedOutput(); err != nil {
+						t.Fatalf("generated net/http project does not compile: %v\n%s", err, output)
+					}
+				}
+			})
+		}
+	}
+}
+
+func assertParseableGo(t *testing.T, root string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || filepath.Ext(path) != ".go" {
+			return nil
+		}
+		_, err = parser.ParseFile(fset, path, nil, parser.AllErrors)
+		return err
+	}); err != nil {
+		t.Fatalf("generated Go files are not parseable: %v", err)
 	}
 }

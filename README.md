@@ -13,7 +13,7 @@ It creates clean, ordinary Go services without forcing a framework runtime or lo
 
 | Item | Value |
 | --- | --- |
-| Current version | `v2.0.0` |
+| Current version | `v2.1.0` |
 | License | MIT |
 | Default server | `net/http` |
 | Architectures | Layered, Clean Architecture |
@@ -152,6 +152,9 @@ Generated services include environment config, `log/slog` structured logging, `M
 | OpenAPI/Swagger | Planned |
 | JWT/middleware | Planned |
 | Custom templates/plugins | Planned |
+| Architecture-specific generated READMEs | Done |
+| Architecture-specific resource generation | Done |
+| Router/architecture generation checks | Done |
 
 ## Updates
 

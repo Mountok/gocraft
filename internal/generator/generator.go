@@ -36,6 +36,7 @@ type templateData struct {
 	ModulePath  string
 	Router      string
 	Arch        string
+	IsClean     bool
 	UsesGin     bool
 	UsesChi     bool
 	UsesFiber   bool
@@ -50,6 +51,9 @@ func NewProject(options ProjectOptions) error {
 		return err
 	}
 	options.Router = router
+	if options.Arch == "" {
+		options.Arch = "layered"
+	}
 
 	if err := validateProjectOptions(options); err != nil {
 		return err
@@ -66,6 +70,7 @@ func NewProject(options ProjectOptions) error {
 		ModulePath:  defaultModulePrefix + "/" + options.Name,
 		Router:      options.Router,
 		Arch:        options.Arch,
+		IsClean:     options.Arch == "clean",
 		UsesGin:     options.Router == "gin",
 		UsesChi:     options.Router == "chi",
 		UsesFiber:   options.Router == "fiber",
@@ -188,9 +193,17 @@ func NewResource(root, name string) error {
 	if err != nil {
 		return err
 	}
+	arch := "layered"
+	if _, err := os.Stat(filepath.Join(root, "internal", "domain")); err == nil {
+		arch = "clean"
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
 
 	data := templateData{
 		ModulePath: modulePath,
+		Arch:       arch,
+		IsClean:    arch == "clean",
 		Resource:   packageName(name),
 		TypeName:   typeName(name),
 	}
@@ -200,6 +213,14 @@ func NewResource(root, name string) error {
 		{Path: "internal/repository/{{.Resource}}_repository.go", Template: resourceRepositoryTemplate, Go: true},
 		{Path: "internal/service/{{.Resource}}_service.go", Template: resourceServiceTemplate, Go: true},
 		{Path: "internal/handler/{{.Resource}}_handler.go", Template: resourceHandlerTemplate, Go: true},
+	}
+	if arch == "clean" {
+		files = []fileSpec{
+			{Path: "internal/domain/{{.Resource}}.go", Template: cleanResourceDomainTemplate, Go: true},
+			{Path: "internal/usecase/{{.Resource}}_usecase.go", Template: cleanResourceUsecaseTemplate, Go: true},
+			{Path: "internal/interface/http/{{.Resource}}_handler.go", Template: cleanResourceHandlerTemplate, Go: true},
+			{Path: "internal/infrastructure/repository/{{.Resource}}_repository.go", Template: cleanResourceRepositoryTemplate, Go: true},
+		}
 	}
 
 	for _, file := range files {

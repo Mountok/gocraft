@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.1.0
+
+### Added
+
+- Architecture-specific generated README content.
+- Clean Architecture resource generation for `gocraft make resource <name>`.
+- Generation checks for all router and architecture combinations.
+
+### Changed
+
+- Improved architecture descriptions in the interactive TUI.
+
 ## v2.0.0
 
 ### Added

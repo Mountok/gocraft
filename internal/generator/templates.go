@@ -47,12 +47,28 @@ The service starts an HTTP server on ` + "`HTTP_ADDR`" + ` and exposes:
 
 ## Structure
 
+{{if .IsClean}}
+- ` + "`cmd/{{.Name}}`" + ` - application entrypoint
+- ` + "`internal/domain`" + ` - enterprise/domain models
+- ` + "`internal/usecase`" + ` - application use cases and ports
+- ` + "`internal/interface/http`" + ` - HTTP delivery layer
+- ` + "`internal/infrastructure/repository`" + ` - infrastructure adapters
+- ` + "`internal/config`" + ` - environment configuration
+{{else}}
 - ` + "`cmd/{{.Name}}`" + ` - application entrypoint
 - ` + "`internal/handler`" + ` - HTTP handlers
 - ` + "`internal/service`" + ` - application services
 - ` + "`internal/repository`" + ` - data access layer
 - ` + "`internal/models`" + ` - domain models
 - ` + "`internal/config`" + ` - environment configuration
+{{end}}
+
+## Next Steps
+
+` + "```sh" + `
+make run
+make test
+` + "```" + `
 `
 
 const netHTTPMainTemplate = `package main
@@ -803,6 +819,102 @@ func (h *{{.TypeName}}Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	created, err := h.service.Create(r.Context(), input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(created)
+}
+`
+
+const cleanResourceDomainTemplate = `package domain
+
+type {{.TypeName}} struct {
+	ID string ` + "`json:\"id\"`" + `
+}
+`
+
+const cleanResourceUsecaseTemplate = `package usecase
+
+import (
+	"context"
+
+	"{{.ModulePath}}/internal/domain"
+)
+
+type {{.TypeName}}Repository interface {
+	Create(ctx context.Context, item domain.{{.TypeName}}) (domain.{{.TypeName}}, error)
+	FindByID(ctx context.Context, id string) (domain.{{.TypeName}}, error)
+}
+
+type {{.TypeName}}Usecase struct {
+	repository {{.TypeName}}Repository
+}
+
+func New{{.TypeName}}Usecase(repository {{.TypeName}}Repository) *{{.TypeName}}Usecase {
+	return &{{.TypeName}}Usecase{repository: repository}
+}
+
+func (u *{{.TypeName}}Usecase) Create(ctx context.Context, item domain.{{.TypeName}}) (domain.{{.TypeName}}, error) {
+	return u.repository.Create(ctx, item)
+}
+`
+
+const cleanResourceRepositoryTemplate = `package repository
+
+import (
+	"context"
+
+	"{{.ModulePath}}/internal/domain"
+)
+
+type InMemory{{.TypeName}}Repository struct {
+	items map[string]domain.{{.TypeName}}
+}
+
+func NewInMemory{{.TypeName}}Repository() *InMemory{{.TypeName}}Repository {
+	return &InMemory{{.TypeName}}Repository{items: make(map[string]domain.{{.TypeName}})}
+}
+
+func (r *InMemory{{.TypeName}}Repository) Create(ctx context.Context, item domain.{{.TypeName}}) (domain.{{.TypeName}}, error) {
+	r.items[item.ID] = item
+	return item, nil
+}
+
+func (r *InMemory{{.TypeName}}Repository) FindByID(ctx context.Context, id string) (domain.{{.TypeName}}, error) {
+	return r.items[id], nil
+}
+`
+
+const cleanResourceHandlerTemplate = `package httpapi
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"{{.ModulePath}}/internal/domain"
+	"{{.ModulePath}}/internal/usecase"
+)
+
+type {{.TypeName}}Handler struct {
+	usecase *usecase.{{.TypeName}}Usecase
+}
+
+func New{{.TypeName}}Handler(usecase *usecase.{{.TypeName}}Usecase) *{{.TypeName}}Handler {
+	return &{{.TypeName}}Handler{usecase: usecase}
+}
+
+func (h *{{.TypeName}}Handler) Create(w http.ResponseWriter, r *http.Request) {
+	var input domain.{{.TypeName}}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	created, err := h.usecase.Create(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

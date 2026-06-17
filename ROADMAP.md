@@ -49,14 +49,14 @@ This file tracks what is already done and what should be built next.
 - [x] clean architecture in interactive selection
 - [x] clean structure with domain, usecase, interface, infrastructure
 
-## Next Versions
-
 ### v2.1.0 - Architecture Polish
 
-- [ ] improve generated README per architecture
-- [ ] add architecture-specific resource generation
-- [ ] add compile checks for all router and architecture combinations
-- [ ] improve TUI descriptions for architecture selection
+- [x] improve generated README per architecture
+- [x] add architecture-specific resource generation
+- [x] add compile checks for all router and architecture combinations
+- [x] improve TUI descriptions for architecture selection
+
+## Next Versions
 
 ### v3.0.0 - Database Support
 
