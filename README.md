@@ -1,8 +1,25 @@
 # GoCraft
 
+![GitHub stars](https://img.shields.io/github/stars/Mountok/gocraft?style=for-the-badge)
+![Latest release](https://img.shields.io/github/v/tag/Mountok/gocraft?label=release&style=for-the-badge)
+![License](https://img.shields.io/github/license/Mountok/gocraft?style=for-the-badge)
+![Go version](https://img.shields.io/github/go-mod/go-version/Mountok/gocraft?style=for-the-badge)
+
 GoCraft is a CLI generator for production-ready Go project structure.
 
-It creates a clean, ordinary Go service foundation without forcing a framework or runtime dependency on the generated project.
+It creates clean, ordinary Go services without forcing a framework runtime or locking the project to the generator.
+
+## Status
+
+| Item | Value |
+| --- | --- |
+| Current version | `v2.0.0` |
+| License | MIT |
+| Default server | `net/http` |
+| Architectures | Layered, Clean Architecture |
+| Frameworks | `net/http`, Gin, chi, Fiber, Echo |
+| Installer | macOS/Linux shell installer |
+| Update checks | Built in |
 
 ## Install
 
@@ -12,9 +29,7 @@ System install on macOS/Linux:
 curl -fsSL https://raw.githubusercontent.com/Mountok/gocraft/main/install.sh | sh
 ```
 
-This installs `gocraft` to `/usr/local/bin`, so it works from any directory.
-
-If `/usr/local/bin` requires admin rights, the installer will use `sudo`.
+This installs `gocraft` to `/usr/local/bin`, so it works from any directory. If `/usr/local/bin` requires admin rights, the installer uses `sudo`.
 
 Uninstall:
 
@@ -28,35 +43,20 @@ Manual Go install is also supported, but it requires Go's bin directory to be in
 go install github.com/Mountok/gocraft/cmd/gocraft@latest
 ```
 
-## Usage
+## Quick Start
 
-Create a new service:
+Create a default `net/http` service:
 
 ```sh
 gocraft new user-service
 ```
 
-Create a Gin service:
+Create a service with a framework:
 
 ```sh
 gocraft new user-service gin
-```
-
-Create a chi service:
-
-```sh
 gocraft new user-service chi
-```
-
-Create a Fiber service:
-
-```sh
 gocraft new user-service fiber
-```
-
-Create an Echo service:
-
-```sh
 gocraft new user-service echo
 ```
 
@@ -66,22 +66,17 @@ Create a Clean Architecture service:
 gocraft new --arch clean user-service
 ```
 
-Run interactive project creation:
+Open the interactive wizard:
 
 ```sh
 gocraft new
 ```
 
-In a terminal, this opens a colored wizard with arrow-key selection for framework and architecture.
+In a terminal, the wizard uses colors and arrow-key selection for framework and architecture.
 
-Check installed version:
+## Generated Project
 
-```sh
-gocraft version
-gocraft check-update
-```
-
-Generated structure:
+Layered architecture output:
 
 ```text
 user-service/
@@ -101,69 +96,87 @@ user-service/
 `-- README.md
 ```
 
-The generated service uses `net/http` by default, structured logging from `log/slog`, environment-based config, and a `GET /health` endpoint.
+Clean Architecture output:
 
-Add a layered resource inside a generated project:
-
-```sh
-gocraft make resource user
+```text
+user-service/
+|-- cmd/user-service/
+|-- internal/
+|   |-- config/
+|   |-- domain/
+|   |-- usecase/
+|   |-- interface/http/
+|   `-- infrastructure/repository/
+|-- migrations/
+|-- configs/
+|-- pkg/
+|-- .env
+|-- Makefile
+|-- go.mod
+`-- README.md
 ```
 
-This creates model, repository, service, and handler skeleton files.
+Generated services include environment config, `log/slog` structured logging, `Makefile`, README, and `GET /health`.
 
-## Supported Today
+## Commands
 
-- Current version: `v2.0.0`
-- `gocraft new <name>`
-- `gocraft new <name> gin`
-- `gocraft new <name> chi`
-- `gocraft new <name> fiber`
-- `gocraft new <name> echo`
-- interactive `gocraft new` with arrow-key TUI
-- `--router nethttp`
-- `--router gin`
-- `--router chi`
-- `--router fiber`
-- `--router echo`
-- `--arch layered`
-- `--arch clean`
-- `gocraft make resource <name>`
-- `gocraft version`
-- automatic update warning when a newer GitHub tag is available
+| Command | Description |
+| --- | --- |
+| `gocraft new <name>` | Create a default `net/http` layered project |
+| `gocraft new <name> gin` | Create a Gin project |
+| `gocraft new <name> chi` | Create a chi project |
+| `gocraft new <name> fiber` | Create a Fiber project |
+| `gocraft new <name> echo` | Create an Echo project |
+| `gocraft new --arch clean <name>` | Create a Clean Architecture project |
+| `gocraft make resource <name>` | Generate model, repository, service, and handler skeletons |
+| `gocraft version` | Show installed version |
+| `gocraft check-update` | Check the latest GitHub version |
 
-Flags for database support and ORM support are intentionally rejected until those releases are implemented.
+## Feature Matrix
 
-## Roadmap
+| Feature | Status |
+| --- | --- |
+| Project generator | Done |
+| Layered Architecture | Done |
+| Clean Architecture | Done |
+| `net/http` | Done |
+| Gin | Done |
+| chi | Done |
+| Fiber | Done |
+| Echo | Done |
+| Colored TUI wizard | Done |
+| Resource generation | Basic |
+| PostgreSQL/MySQL | Planned |
+| GORM/SQLX | Planned |
+| Migrations | Planned |
+| OpenAPI/Swagger | Planned |
+| JWT/middleware | Planned |
+| Custom templates/plugins | Planned |
 
-Version 1.0:
+## Updates
 
-- `net/http`
-- Layered Architecture
-- project structure generation
+GoCraft checks for newer GitHub tags before generation commands and prints an update command when a newer release exists.
 
-Version 2.0:
+Manual check:
 
-- Clean Architecture
+```sh
+gocraft check-update
+```
 
-Version 3.0:
+Disable automatic checks for one command:
 
-- PostgreSQL
-- MySQL
-- GORM
-- SQLX
-- migrations
+```sh
+GOCRAFT_SKIP_UPDATE_CHECK=1 gocraft new user-service
+```
 
-Version 4.0:
+## Project Links
 
-- CRUD generation
-- OpenAPI
-- Swagger
-- JWT
-- middleware
+| Document | Description |
+| --- | --- |
+| [ROADMAP.md](ROADMAP.md) | Version checklist and planned work |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+| [LICENSE](LICENSE) | MIT license |
 
-Version 5.0:
+## License
 
-- custom templates
-- plugins
-- template marketplace
-- microservice generation
+GoCraft is released under the MIT License.
