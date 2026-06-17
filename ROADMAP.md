@@ -56,18 +56,29 @@ This file tracks what is already done and what should be built next.
 - [x] add compile checks for all router and architecture combinations
 - [x] improve TUI descriptions for architecture selection
 
-## Next Versions
-
 ### v3.0.0 - Database Support
 
-- [ ] PostgreSQL option
-- [ ] MySQL option
-- [ ] database config in `.env`
-- [ ] database connection package
-- [ ] Docker Compose generation
-- [ ] initial migrations directory and examples
+- [x] PostgreSQL option
+- [x] database config in `.env`
+- [x] database connection package
+- [x] Docker Compose generation
+- [x] initial migrations directory and examples
 
-### v3.1.0 - ORM Support
+## Next Versions
+
+### v3.1.0 - Database Polish
+
+- [ ] wire DB connection into generated main behind an optional health check
+- [ ] improve migration command documentation
+- [ ] add database-specific generated README sections per architecture
+
+### v3.2.0 - MySQL Support
+
+- [ ] MySQL option
+- [ ] MySQL Docker Compose generation
+- [ ] MySQL database connection package
+
+### v3.3.0 - ORM Support
 
 - [ ] GORM option
 - [ ] SQLX option

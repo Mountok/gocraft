@@ -31,18 +31,20 @@ type fileSpec struct {
 }
 
 type templateData struct {
-	Name        string
-	PackageName string
-	ModulePath  string
-	Router      string
-	Arch        string
-	IsClean     bool
-	UsesGin     bool
-	UsesChi     bool
-	UsesFiber   bool
-	UsesEcho    bool
-	Resource    string
-	TypeName    string
+	Name         string
+	PackageName  string
+	ModulePath   string
+	Router       string
+	Arch         string
+	IsClean      bool
+	HasDeps      bool
+	UsesGin      bool
+	UsesChi      bool
+	UsesFiber    bool
+	UsesEcho     bool
+	UsesPostgres bool
+	Resource     string
+	TypeName     string
 }
 
 func NewProject(options ProjectOptions) error {
@@ -54,6 +56,7 @@ func NewProject(options ProjectOptions) error {
 	if options.Arch == "" {
 		options.Arch = "layered"
 	}
+	options.DB = normalizeDB(options.DB)
 
 	if err := validateProjectOptions(options); err != nil {
 		return err
@@ -65,16 +68,18 @@ func NewProject(options ProjectOptions) error {
 	}
 
 	data := templateData{
-		Name:        options.Name,
-		PackageName: packageName(options.Name),
-		ModulePath:  defaultModulePrefix + "/" + options.Name,
-		Router:      options.Router,
-		Arch:        options.Arch,
-		IsClean:     options.Arch == "clean",
-		UsesGin:     options.Router == "gin",
-		UsesChi:     options.Router == "chi",
-		UsesFiber:   options.Router == "fiber",
-		UsesEcho:    options.Router == "echo",
+		Name:         options.Name,
+		PackageName:  packageName(options.Name),
+		ModulePath:   defaultModulePrefix + "/" + options.Name,
+		Router:       options.Router,
+		Arch:         options.Arch,
+		IsClean:      options.Arch == "clean",
+		HasDeps:      options.Router != "nethttp" || options.DB == "postgres",
+		UsesGin:      options.Router == "gin",
+		UsesChi:      options.Router == "chi",
+		UsesFiber:    options.Router == "fiber",
+		UsesEcho:     options.Router == "echo",
+		UsesPostgres: options.DB == "postgres",
 	}
 
 	dirs := []string{
@@ -103,6 +108,10 @@ func NewProject(options ProjectOptions) error {
 		}
 		files = cleanFiles(options.Router)
 	}
+	if options.DB == "postgres" {
+		dirs = append(dirs, postgresDirs(options.Arch)...)
+		files = append(files, postgresFiles(options.Arch)...)
+	}
 
 	for _, dir := range dirs {
 		if err := os.MkdirAll(filepath.Join(options.Name, dir), 0o755); err != nil {
@@ -117,6 +126,26 @@ func NewProject(options ProjectOptions) error {
 	}
 
 	return nil
+}
+
+func postgresDirs(arch string) []string {
+	if arch == "clean" {
+		return []string{"internal/infrastructure/database"}
+	}
+	return []string{"internal/database"}
+}
+
+func postgresFiles(arch string) []fileSpec {
+	dbPath := "internal/database/postgres.go"
+	if arch == "clean" {
+		dbPath = "internal/infrastructure/database/postgres.go"
+	}
+	return []fileSpec{
+		{Path: dbPath, Template: postgresTemplate, Go: true},
+		{Path: "docker-compose.yml", Template: dockerComposeTemplate},
+		{Path: "migrations/000001_init.up.sql", Template: migrationUpTemplate},
+		{Path: "migrations/000001_init.down.sql", Template: migrationDownTemplate},
+	}
 }
 
 func layeredFiles(router string) []fileSpec {
@@ -242,13 +271,24 @@ func validateProjectOptions(options ProjectOptions) error {
 	if options.Arch != "layered" && options.Arch != "clean" {
 		return fmt.Errorf("architecture %q is not supported yet; use layered or clean", options.Arch)
 	}
-	if options.DB != "" {
-		return fmt.Errorf("database support %q is planned for a future release", options.DB)
+	if options.DB != "" && options.DB != "postgres" {
+		return fmt.Errorf("database support %q is not supported yet; use postgres", options.DB)
 	}
 	if options.ORM != "" {
 		return fmt.Errorf("ORM support %q is planned for a future release", options.ORM)
 	}
 	return nil
+}
+
+func normalizeDB(db string) string {
+	switch strings.ToLower(strings.TrimSpace(db)) {
+	case "", "none", "no":
+		return ""
+	case "postgres", "postgresql", "pg":
+		return "postgres"
+	default:
+		return strings.ToLower(strings.TrimSpace(db))
+	}
 }
 
 func normalizeRouter(router string) (string, error) {

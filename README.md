@@ -13,11 +13,12 @@ It creates clean, ordinary Go services without forcing a framework runtime or lo
 
 | Item | Value |
 | --- | --- |
-| Current version | `v2.1.0` |
+| Current version | `v3.0.0` |
 | License | MIT |
 | Default server | `net/http` |
 | Architectures | Layered, Clean Architecture |
 | Frameworks | `net/http`, Gin, chi, Fiber, Echo |
+| Databases | PostgreSQL |
 | Installer | macOS/Linux shell installer |
 | Update checks | Built in |
 
@@ -64,6 +65,12 @@ Create a Clean Architecture service:
 
 ```sh
 gocraft new --arch clean user-service
+```
+
+Create a PostgreSQL service without ORM:
+
+```sh
+gocraft new --db postgres user-service
 ```
 
 Open the interactive wizard:
@@ -128,6 +135,7 @@ Generated services include environment config, `log/slog` structured logging, `M
 | `gocraft new <name> fiber` | Create a Fiber project |
 | `gocraft new <name> echo` | Create an Echo project |
 | `gocraft new --arch clean <name>` | Create a Clean Architecture project |
+| `gocraft new --db postgres <name>` | Create a PostgreSQL project through `database/sql` |
 | `gocraft make resource <name>` | Generate model, repository, service, and handler skeletons |
 | `gocraft version` | Show installed version |
 | `gocraft check-update` | Check the latest GitHub version |
@@ -146,7 +154,8 @@ Generated services include environment config, `log/slog` structured logging, `M
 | Echo | Done |
 | Colored TUI wizard | Done |
 | Resource generation | Basic |
-| PostgreSQL/MySQL | Planned |
+| PostgreSQL | Done |
+| MySQL | Planned |
 | GORM/SQLX | Planned |
 | Migrations | Planned |
 | OpenAPI/Swagger | Planned |

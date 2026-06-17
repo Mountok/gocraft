@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.0.0
+
+### Added
+
+- `--db postgres` for PostgreSQL project generation without ORM.
+- PostgreSQL connection package through `database/sql` and `github.com/jackc/pgx/v5/stdlib`.
+- `DATABASE_URL` generation in `.env` and config.
+- `docker-compose.yml` for local PostgreSQL.
+- Initial migration placeholders.
+- Database Makefile targets.
+
 ## v2.1.0
 
 ### Added

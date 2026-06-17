@@ -192,6 +192,68 @@ func TestNewProjectCreatesCleanProject(t *testing.T) {
 	}
 }
 
+func TestNewProjectCreatesPostgresFiles(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "layered", DB: "postgres"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+
+	for _, path := range []string{
+		"api/internal/database/postgres.go",
+		"api/docker-compose.yml",
+		"api/migrations/000001_init.up.sql",
+		"api/migrations/000001_init.down.sql",
+	} {
+		if _, err := os.Stat(filepath.Join(tmp, path)); err != nil {
+			t.Fatalf("expected generated file %s: %v", path, err)
+		}
+	}
+
+	goMod, err := os.ReadFile(filepath.Join(tmp, "api", "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(goMod), "github.com/jackc/pgx/v5") {
+		t.Fatal("expected pgx dependency in go.mod")
+	}
+}
+
+func TestNewProjectCreatesCleanPostgresFiles(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "clean", DB: "pg"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(tmp, "api/internal/infrastructure/database/postgres.go")); err != nil {
+		t.Fatalf("expected clean postgres database file: %v", err)
+	}
+}
+
 func TestNewProjectRejectsUnsupportedRouter(t *testing.T) {
 	err := NewProject(ProjectOptions{Name: "api", Router: "fasthttp", Arch: "layered"})
 	if err == nil {
@@ -203,6 +265,13 @@ func TestNewProjectRejectsUnsupportedArchitecture(t *testing.T) {
 	err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "hexagonal"})
 	if err == nil {
 		t.Fatal("expected unsupported architecture error")
+	}
+}
+
+func TestNewProjectRejectsUnsupportedDatabase(t *testing.T) {
+	err := NewProject(ProjectOptions{Name: "api", Router: "nethttp", Arch: "layered", DB: "mysql"})
+	if err == nil {
+		t.Fatal("expected unsupported database error")
 	}
 }
 
@@ -289,6 +358,36 @@ func TestAllRouterArchitectureCombinationsGenerateParseableGo(t *testing.T) {
 						t.Fatalf("generated net/http project does not compile: %v\n%s", err, output)
 					}
 				}
+			})
+		}
+	}
+}
+
+func TestAllPostgresRouterArchitectureCombinationsGenerateParseableGo(t *testing.T) {
+	routers := []string{"nethttp", "gin", "chi", "fiber", "echo"}
+	architectures := []string{"layered", "clean"}
+
+	for _, router := range routers {
+		for _, arch := range architectures {
+			name := router + "-" + arch + "-postgres"
+			t.Run(name, func(t *testing.T) {
+				tmp := t.TempDir()
+				oldWD, err := os.Getwd()
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() {
+					if err := os.Chdir(oldWD); err != nil {
+						t.Fatal(err)
+					}
+				})
+				if err := os.Chdir(tmp); err != nil {
+					t.Fatal(err)
+				}
+				if err := NewProject(ProjectOptions{Name: name, Router: router, Arch: arch, DB: "postgres"}); err != nil {
+					t.Fatalf("NewProject() error = %v", err)
+				}
+				assertParseableGo(t, filepath.Join(tmp, name))
 			})
 		}
 	}

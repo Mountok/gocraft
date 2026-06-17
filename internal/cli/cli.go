@@ -85,7 +85,7 @@ func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	flags.SetOutput(stderr)
 	router := flags.String("router", "", "HTTP framework: default, nethttp, gin, chi, fiber, echo")
 	arch := flags.String("arch", "layered", "architecture: layered, clean")
-	db := flags.String("db", "", "database support: planned")
+	db := flags.String("db", "", "database: postgres")
 	orm := flags.String("orm", "", "ORM support: planned")
 
 	if err := flags.Parse(args); err != nil {

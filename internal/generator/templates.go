@@ -4,18 +4,25 @@ const projectGoModTemplate = `module {{.ModulePath}}
 
 go 1.22
 
-{{if .UsesGin}}require github.com/gin-gonic/gin v1.10.0
-{{else if .UsesChi}}require github.com/go-chi/chi/v5 v5.1.0
-{{else if .UsesFiber}}require github.com/gofiber/fiber/v2 v2.52.5
-{{else if .UsesEcho}}require github.com/labstack/echo/v4 v4.12.0
+{{if .HasDeps}}require (
+{{if .UsesGin}}	github.com/gin-gonic/gin v1.10.0
+{{end}}{{if .UsesChi}}	github.com/go-chi/chi/v5 v5.1.0
+{{end}}{{if .UsesFiber}}	github.com/gofiber/fiber/v2 v2.52.5
+{{end}}{{if .UsesEcho}}	github.com/labstack/echo/v4 v4.12.0
+{{end}}{{if .UsesPostgres}}	github.com/jackc/pgx/v5 v5.7.1
+{{end}})
 {{end}}
 `
 
 const envTemplate = `APP_ENV=local
 HTTP_ADDR=:8080
+{{if .UsesPostgres}}DATABASE_URL=postgres://postgres:postgres@localhost:5432/{{.PackageName}}?sslmode=disable
+{{end}}
 `
 
 const makefileTemplate = `.PHONY: run test tidy
+{{if .UsesPostgres}}.PHONY: db-up db-down migrate-up migrate-down
+{{end}}
 
 run:
 	go run ./cmd/{{.Name}}
@@ -25,6 +32,19 @@ test:
 
 tidy:
 	go mod tidy
+{{if .UsesPostgres}}
+db-up:
+	docker compose up -d postgres
+
+db-down:
+	docker compose down
+
+migrate-up:
+	@echo "Apply migrations with your migration tool of choice from ./migrations"
+
+migrate-down:
+	@echo "Rollback migrations with your migration tool of choice from ./migrations"
+{{end}}
 `
 
 const projectReadmeTemplate = `# {{.Name}}
@@ -44,6 +64,19 @@ make run
 The service starts an HTTP server on ` + "`HTTP_ADDR`" + ` and exposes:
 
 - ` + "`GET /health`" + `
+{{if .UsesPostgres}}
+## Database
+
+This project includes PostgreSQL support through ` + "`database/sql`" + ` and ` + "`github.com/jackc/pgx/v5/stdlib`" + `.
+
+Start PostgreSQL:
+
+` + "```sh" + `
+make db-up
+` + "```" + `
+
+Connection string is configured with ` + "`DATABASE_URL`" + ` in ` + "`.env`" + `.
+{{end}}
 
 ## Structure
 
@@ -69,6 +102,58 @@ The service starts an HTTP server on ` + "`HTTP_ADDR`" + ` and exposes:
 make run
 make test
 ` + "```" + `
+`
+
+const postgresTemplate = `package database
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+)
+
+func Connect(ctx context.Context, databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("open postgres: %w", err)
+	}
+
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Hour)
+
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping postgres: %w", err)
+	}
+
+	return db, nil
+}
+`
+
+const dockerComposeTemplate = `services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: {{.PackageName}}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+`
+
+const migrationUpTemplate = `-- Add initial database schema here.
+`
+
+const migrationDownTemplate = `-- Drop initial database schema here.
 `
 
 const netHTTPMainTemplate = `package main
@@ -243,12 +328,16 @@ import "os"
 type Config struct {
 	AppEnv   string
 	HTTPAddr string
+{{if .UsesPostgres}}	DatabaseURL string
+{{end}}
 }
 
 func Load() Config {
 	return Config{
 		AppEnv:   getEnv("APP_ENV", "local"),
 		HTTPAddr: getEnv("HTTP_ADDR", ":8080"),
+{{if .UsesPostgres}}		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/{{.PackageName}}?sslmode=disable"),
+{{end}}
 	}
 }
 
