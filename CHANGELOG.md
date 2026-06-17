@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.5.0
+
+### Added
+
+- `gocraft new <name> echo` for Echo project generation.
+- Interactive framework selection now includes Echo.
+
 ## v1.4.0
 
 ### Added

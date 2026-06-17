@@ -22,8 +22,8 @@ const usage = `GoCraft - Go project architecture generator
 
 Usage:
   gocraft new
-  gocraft new <name> [default|gin|chi|fiber]
-  gocraft new <name> [--router default|nethttp|gin|chi|fiber] [--arch layered]
+  gocraft new <name> [default|gin|chi|fiber|echo]
+  gocraft new <name> [--router default|nethttp|gin|chi|fiber|echo] [--arch layered]
   gocraft make resource <name>
   gocraft version
   gocraft check-update
@@ -33,6 +33,7 @@ Examples:
   gocraft new user-service gin
   gocraft new user-service chi
   gocraft new user-service fiber
+  gocraft new user-service echo
   gocraft make resource user
 `
 
@@ -82,7 +83,7 @@ func runCheckUpdate(stdout io.Writer) error {
 func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("new", flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	router := flags.String("router", "", "HTTP framework: default, nethttp, gin, chi, fiber")
+	router := flags.String("router", "", "HTTP framework: default, nethttp, gin, chi, fiber, echo")
 	arch := flags.String("arch", "layered", "architecture: layered")
 	db := flags.String("db", "", "database support: planned")
 	orm := flags.String("orm", "", "ORM support: planned")
@@ -94,7 +95,7 @@ func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return runInteractiveNew(stdin, stdout, *arch, *db, *orm)
 	}
 	if flags.NArg() > 2 {
-		return errors.New("usage: gocraft new <name> [default|gin|chi|fiber]")
+		return errors.New("usage: gocraft new <name> [default|gin|chi|fiber|echo]")
 	}
 	if flags.NArg() == 2 && *router != "" {
 		return errors.New("use either positional framework or --router, not both")
@@ -148,6 +149,7 @@ func runTUIInteractiveNew(stdout io.Writer, arch, db, orm string) error {
 		{Label: "gin", Description: "Gin web framework", Value: "gin"},
 		{Label: "chi", Description: "chi lightweight router", Value: "chi"},
 		{Label: "fiber", Description: "Fiber web framework", Value: "fiber"},
+		{Label: "echo", Description: "Echo web framework", Value: "echo"},
 	}
 	_, framework, err := selectChoice("Framework", frameworks)
 	if err != nil {
@@ -198,6 +200,7 @@ func runFallbackInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm 
 	fmt.Fprintln(stdout, "  2) gin")
 	fmt.Fprintln(stdout, "  3) chi")
 	fmt.Fprintln(stdout, "  4) fiber")
+	fmt.Fprintln(stdout, "  5) echo")
 	fmt.Fprint(stdout, "Select framework [1]: ")
 	framework, err := reader.ReadString('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -212,6 +215,8 @@ func runFallbackInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm 
 		framework = "chi"
 	} else if framework == "4" {
 		framework = "fiber"
+	} else if framework == "5" {
+		framework = "echo"
 	}
 
 	options := generator.ProjectOptions{
