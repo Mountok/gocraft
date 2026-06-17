@@ -5,6 +5,7 @@ const projectGoModTemplate = `module {{.ModulePath}}
 go 1.22
 
 {{if .UsesGin}}require github.com/gin-gonic/gin v1.10.0
+{{else if .UsesChi}}require github.com/go-chi/chi/v5 v5.1.0
 {{end}}
 `
 
@@ -109,6 +110,40 @@ func main() {
 
 	logger.Info("starting server", "addr", cfg.HTTPAddr)
 	if err := router.Run(cfg.HTTPAddr); err != nil {
+		logger.Error("server stopped", "error", err)
+		os.Exit(1)
+	}
+}
+`
+
+const chiMainTemplate = `package main
+
+import (
+	"log/slog"
+	"net/http"
+	"os"
+
+	"github.com/go-chi/chi/v5"
+
+	"{{.ModulePath}}/internal/config"
+	"{{.ModulePath}}/internal/handler"
+	"{{.ModulePath}}/internal/repository"
+	"{{.ModulePath}}/internal/service"
+)
+
+func main() {
+	cfg := config.Load()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	healthRepository := repository.NewHealthRepository()
+	healthService := service.NewHealthService(healthRepository)
+	healthHandler := handler.NewHealthHandler(healthService)
+
+	router := chi.NewRouter()
+	router.Get("/health", healthHandler.Check)
+
+	logger.Info("starting server", "addr", cfg.HTTPAddr)
+	if err := http.ListenAndServe(cfg.HTTPAddr, router); err != nil {
 		logger.Error("server stopped", "error", err)
 		os.Exit(1)
 	}

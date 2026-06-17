@@ -19,8 +19,8 @@ const usage = `GoCraft - Go project architecture generator
 
 Usage:
   gocraft new
-  gocraft new <name> [default|gin]
-  gocraft new <name> [--router default|nethttp|gin] [--arch layered]
+  gocraft new <name> [default|gin|chi]
+  gocraft new <name> [--router default|nethttp|gin|chi] [--arch layered]
   gocraft make resource <name>
   gocraft version
   gocraft check-update
@@ -28,6 +28,7 @@ Usage:
 Examples:
   gocraft new user-service
   gocraft new user-service gin
+  gocraft new user-service chi
   gocraft make resource user
 `
 
@@ -77,7 +78,7 @@ func runCheckUpdate(stdout io.Writer) error {
 func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	flags := flag.NewFlagSet("new", flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	router := flags.String("router", "", "HTTP framework: default, nethttp, gin")
+	router := flags.String("router", "", "HTTP framework: default, nethttp, gin, chi")
 	arch := flags.String("arch", "layered", "architecture: layered")
 	db := flags.String("db", "", "database support: planned")
 	orm := flags.String("orm", "", "ORM support: planned")
@@ -89,7 +90,7 @@ func runNew(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return runInteractiveNew(stdin, stdout, *arch, *db, *orm)
 	}
 	if flags.NArg() > 2 {
-		return errors.New("usage: gocraft new <name> [default|gin]")
+		return errors.New("usage: gocraft new <name> [default|gin|chi]")
 	}
 	if flags.NArg() == 2 && *router != "" {
 		return errors.New("use either positional framework or --router, not both")
@@ -129,6 +130,7 @@ func runInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm string) 
 	fmt.Fprintln(stdout, "Framework:")
 	fmt.Fprintln(stdout, "  1) default (net/http)")
 	fmt.Fprintln(stdout, "  2) gin")
+	fmt.Fprintln(stdout, "  3) chi")
 	fmt.Fprint(stdout, "Select framework [1]: ")
 	framework, err := reader.ReadString('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -139,6 +141,8 @@ func runInteractiveNew(stdin io.Reader, stdout io.Writer, arch, db, orm string) 
 		framework = "default"
 	} else if framework == "2" {
 		framework = "gin"
+	} else if framework == "3" {
+		framework = "chi"
 	}
 
 	options := generator.ProjectOptions{

@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.0
+
+### Added
+
+- `gocraft new <name> chi` for chi project generation.
+- Interactive framework selection now includes chi.
+
 ## v1.1.0
 
 ### Added

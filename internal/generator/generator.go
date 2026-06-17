@@ -36,6 +36,7 @@ type templateData struct {
 	ModulePath  string
 	Router      string
 	UsesGin     bool
+	UsesChi     bool
 	Resource    string
 	TypeName    string
 }
@@ -62,12 +63,15 @@ func NewProject(options ProjectOptions) error {
 		ModulePath:  defaultModulePrefix + "/" + options.Name,
 		Router:      options.Router,
 		UsesGin:     options.Router == "gin",
+		UsesChi:     options.Router == "chi",
 	}
 	mainTpl := netHTTPMainTemplate
 	healthHandlerTpl := netHTTPHealthHandlerTemplate
 	if options.Router == "gin" {
 		mainTpl = ginMainTemplate
 		healthHandlerTpl = ginHealthHandlerTemplate
+	} else if options.Router == "chi" {
+		mainTpl = chiMainTemplate
 	}
 
 	for _, dir := range []string{
@@ -167,8 +171,10 @@ func normalizeRouter(router string) (string, error) {
 		return "nethttp", nil
 	case "gin":
 		return "gin", nil
+	case "chi":
+		return "chi", nil
 	default:
-		return "", fmt.Errorf("framework %q is not supported yet; use default or gin", router)
+		return "", fmt.Errorf("framework %q is not supported yet; use default, gin, or chi", router)
 	}
 }
 

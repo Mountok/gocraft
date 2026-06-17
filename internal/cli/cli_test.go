@@ -60,7 +60,7 @@ func TestRunNewWithPositionalFramework(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if err := Run([]string{"new", "api", "gin"}, nil, &stdout, &stderr); err != nil {
+	if err := Run([]string{"new", "api", "chi"}, nil, &stdout, &stderr); err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(tmp, "api", "cmd", "api", "main.go")); err != nil {
@@ -85,7 +85,7 @@ func TestRunNewInteractive(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	stdin := bytes.NewBufferString("api\n2\n")
+	stdin := bytes.NewBufferString("api\n3\n")
 	if err := Run([]string{"new"}, stdin, &stdout, &stderr); err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}

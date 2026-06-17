@@ -42,6 +42,12 @@ Create a Gin service:
 gocraft new user-service gin
 ```
 
+Create a chi service:
+
+```sh
+gocraft new user-service chi
+```
+
 Run interactive project creation:
 
 ```sh
@@ -87,18 +93,20 @@ This creates model, repository, service, and handler skeleton files.
 
 ## Supported Today
 
-- Current version: `v1.1.0`
+- Current version: `v1.2.0`
 - `gocraft new <name>`
 - `gocraft new <name> gin`
+- `gocraft new <name> chi`
 - interactive `gocraft new`
 - `--router nethttp`
 - `--router gin`
+- `--router chi`
 - `--arch layered`
 - `gocraft make resource <name>`
 - `gocraft version`
 - automatic update warning when a newer GitHub tag is available
 
-Flags for Fiber, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
+Flags for Fiber, Echo, Clean Architecture, database support, and ORM support are intentionally rejected until those releases are implemented.
 
 ## Roadmap
 

@@ -74,6 +74,34 @@ func TestNewProjectCreatesGinProject(t *testing.T) {
 	}
 }
 
+func TestNewProjectCreatesChiProject(t *testing.T) {
+	tmp := t.TempDir()
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWD); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewProject(ProjectOptions{Name: "api", Router: "chi", Arch: "layered"}); err != nil {
+		t.Fatalf("NewProject() error = %v", err)
+	}
+
+	goMod, err := os.ReadFile(filepath.Join(tmp, "api", "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(goMod), "github.com/go-chi/chi/v5") {
+		t.Fatal("expected chi dependency in go.mod")
+	}
+}
+
 func TestNewProjectRejectsUnsupportedRouter(t *testing.T) {
 	err := NewProject(ProjectOptions{Name: "api", Router: "fiber", Arch: "layered"})
 	if err == nil {
