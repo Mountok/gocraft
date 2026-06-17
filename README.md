@@ -6,6 +6,18 @@ It creates a clean, ordinary Go service foundation without forcing a framework o
 
 ## Install
 
+System install on macOS/Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Mountok/gocraft/main/install.sh | sh
+```
+
+This installs `gocraft` to `/usr/local/bin`, so it works from any directory.
+
+If `/usr/local/bin` requires admin rights, the installer will use `sudo`.
+
+Manual Go install is also supported, but it requires Go's bin directory to be in `PATH`:
+
 ```sh
 go install github.com/Mountok/gocraft/cmd/gocraft@latest
 ```
